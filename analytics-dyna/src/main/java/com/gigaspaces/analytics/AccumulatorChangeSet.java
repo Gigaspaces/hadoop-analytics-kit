@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.gigaspaces.client.ChangeSet;
 
@@ -21,6 +22,7 @@ import com.gigaspaces.client.ChangeSet;
  * @author DeWayne
  */
 public class AccumulatorChangeSet extends ChangeSet {
+	private static final Logger log=Logger.getLogger(AccumulatorChangeSet.class.getName());
 	private int changeCount=0;
 	final Map<String,Integer> netints=new HashMap<String,Integer>();
 	final Map<String,Double> netdoubles=new HashMap<String,Double>();

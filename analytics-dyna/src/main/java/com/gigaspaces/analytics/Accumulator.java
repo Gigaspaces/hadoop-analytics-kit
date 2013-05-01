@@ -9,7 +9,8 @@ import com.gigaspaces.annotation.pojo.SpaceRouting;
 
 /**
  * This class is what actually accumulates information in the space by the
- * analytics code.
+ * analytics code.  The generic type is a wildcard, and the actual type is determined
+ * by the change api call for individual entries.
  * 
  * @author DeWayne
  *
@@ -17,7 +18,7 @@ import com.gigaspaces.annotation.pojo.SpaceRouting;
 @SpaceClass
 public class Accumulator {
 	private String name;
-	private Map<String,Integer> values=null;
+	private Map<String,?> values=null;
 	
 	public Accumulator(){}
 	
@@ -39,10 +40,10 @@ public class Accumulator {
 	}
 	public void setRouting(Integer routing) {}
 
-	public Map<String,Integer> getValues() {
+	public Map<String,?> getValues() {
 		return values;
 	}
-	public void setValues(Map<String,Integer> values) {
+	public void setValues(Map<String,?> values) {
 		this.values = values;
 	}
 	

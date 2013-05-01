@@ -1,5 +1,7 @@
 package com.gigaspaces.analytics;
 
+import java.util.Map;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -10,7 +12,6 @@ import org.openspaces.core.space.UrlSpaceConfigurer;
 
 import com.gigaspaces.annotation.pojo.SpaceClass;
 import com.gigaspaces.annotation.pojo.SpaceId;
-import com.gigaspaces.client.ChangeSet;
 import com.gigaspaces.query.IdQuery;
 
 public class NetChangeSetTest {
@@ -69,7 +70,8 @@ public class NetChangeSetTest {
 	 */
 	@Test
 	public void testNet(){
-		space.write(new CTest(0));
+		//space.write(new CTest(0));
+		space.write(new Accumulator("test"));
 		AccumulatorChangeSet cs=new AccumulatorChangeSet();
 		
 		cs.increment("fint",1);
@@ -86,14 +88,20 @@ public class NetChangeSetTest {
 		cs.decrement("ffloat",1F); 
 		
 		cs.summarize();
-		space.change(new IdQuery<CTest>(CTest.class,0),cs);
+//		space.change(new IdQuery<CTest>(CTest.class,0),cs);
+		space.change(new IdQuery<Accumulator>(Accumulator.class,"test"),cs);
 		
-		CTest after=space.read(new CTest());
+//		CTest after=space.read(new CTest());
+		Accumulator after=space.read(new Accumulator());
 		org.junit.Assert.assertNotNull(after);
-		org.junit.Assert.assertEquals((int)1,(int)after.getFint());
+/*		org.junit.Assert.assertEquals((int)1,(int)after.getFint());
 		org.junit.Assert.assertEquals((long)1,(long)after.getFlong());
 		org.junit.Assert.assertEquals(1D,after.getFdouble(),.001D);
-		org.junit.Assert.assertEquals(1F,after.getFint(),.001F); 
+		org.junit.Assert.assertEquals(1F,after.getFint(),.001F);*/ 
+		org.junit.Assert.assertEquals(1,after.getValues().get("fint"));
+		org.junit.Assert.assertEquals(1L,after.getValues().get("flong"));
+		org.junit.Assert.assertEquals(1D,(Double)after.getValues().get("fdouble"),.001D);
+		org.junit.Assert.assertEquals(1F,(Float)after.getValues().get("ffloat"),.001F); 
 	}
 	
 
