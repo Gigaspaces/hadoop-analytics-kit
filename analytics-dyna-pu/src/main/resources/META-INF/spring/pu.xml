@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:os-core="http://www.openspaces.org/schema/core" xmlns:os-events="http://www.openspaces.org/schema/events"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:os-remoting="http://www.openspaces.org/schema/remoting"
+	xmlns:os-sla="http://www.openspaces.org/schema/sla"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd        
+      http://www.openspaces.org/schema/core http://www.openspaces.org/schema/core/openspaces-core.xsd
+      http://www.openspaces.org/schema/events http://www.openspaces.org/schema/events/openspaces-events.xsd
+      http://www.openspaces.org/schema/remoting http://www.openspaces.org/schema/remoting/openspaces-remoting.xsd
+		">
+	<!-- Enable scan for OpenSpaces and Spring components -->
+	<context:component-scan base-package="com.gigaspaces.analytics" />
+	<context:annotation-config/>
+	<os-events:annotation-support />
+	<os-core:giga-space-context />
+
+	<bean id="propertiesConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<!-- defaults -->
+		<property name="properties">
+			<props>
+				<prop key="space.name">space</prop>
+				<prop key="hdfs.uri">hdfs://10.143.165.220:54310</prop>
+				<prop key="hdfs.user">ec2-user</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- STREAMING SPACE -->
+
+	<os-core:space id="ijspace" url="/./${space.name}" fifo="true" />
+
+	<os-core:distributed-tx-manager id="transactionManager"
+		default-timeout="5000" />
+	<os-core:giga-space id="space" space="ijspace"
+		tx-manager="transactionManager" />
+
+	<!--  ARCHIVER RELATED CONFIG  -->
+	<!-- 
+	<bean id="hdfsArchiveHandler" class="com.gigaspaces.hdfs.HdfsArchiveHandler">
+		<constructor-arg>
+			<bean class="com.gigaspaces.hdfs.serializers.ToStringHdfsSerializer" />
+		</constructor-arg>
+		<property name="fs">
+			<bean class="com.gigaspaces.hdfs.HdfsFileSystem">
+				<constructor-arg value="${hdfs.uri}" />
+				<constructor-arg value="${hdfs.user}" />
+			</bean>
+		</property>
+		<property name="strategy">
+			<bean class="com.gigaspaces.hdfs.strategies.SimplePatternPathStrategy">
+				<constructor-arg value="/files/%D-%T_%p" />
+			</bean>
+		</property>
+	</bean>
+	
+-->
+	<!-- TODO ARCHIVER NEEDS TO BE DYNAMIC DEPLOY/UPDATE -->
+<!-- 	<bean id="archiveFilter"
+		class="com.gigaspaces.analytics.ProcessedEventFilter" />
+
+	<bean id="archiver" class="org.openspaces.archive.ArchivePollingContainer">
+		<property name="gigaSpace" ref="space" />
+		<property name="archiveHandler" ref="hdfsArchiveHandler" />
+		<property name="template" ref="archiveFilter" />
+		<property name="batchSize" value="1000" />
+	</bean>
+-->
+</beans>
