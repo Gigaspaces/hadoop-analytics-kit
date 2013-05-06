@@ -14,9 +14,8 @@ import org.springframework.beans.factory.annotation.Required;
  *
  */
 public class HdfsArchiveHandler implements ArchiveOperationHandler{
-	private static Logger log=Logger.getLogger(HdfsArchiveHandler.class.getName());
+	private static final Logger log=Logger.getLogger(HdfsArchiveHandler.class.getName());
 	private FileSystem fs;
-	private String path;
 	private FileOutputStream fsdos;
 	private HdfsSerializer serializer;
 	private PathStrategy strategy;
