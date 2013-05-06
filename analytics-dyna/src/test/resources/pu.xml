@@ -14,9 +14,10 @@
       http://www.openspaces.org/schema/sla http://www.openspaces.org/schema/sla/openspaces-sla.xsd">
 
 	<os-core:annotation-support />
- 	<context:component-scan base-package="com.gigaspaces" />
+ 	<context:component-scan base-package="com.gigaspaces.analytics" />
  	<os-core:giga-space-context/> 
   	<os-events:annotation-support /> 
+	<tx:annotation-driven transaction-manager="txm" />  	
 
 	<os-core:space id="ijspace" url="/./space"/>
 		
@@ -25,4 +26,5 @@
 	<os-core:giga-space id="space" space="ijspace"
 		tx-manager="txm" />
 
-</beans>
+	
+	</beans>

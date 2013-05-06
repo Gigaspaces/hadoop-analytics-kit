@@ -1,6 +1,6 @@
 package com.gigaspaces.analytics;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.After;
 import org.junit.Before;
@@ -12,7 +12,6 @@ import org.openspaces.pu.container.ProcessingUnitContainer;
 import org.openspaces.pu.container.integrated.IntegratedProcessingUnitContainerProvider;
 
 public class AccumulatorTest {
-	private static UrlSpaceConfigurer cfg;
 	private static GigaSpace space;
 	private ProcessingUnitContainer pu;
 	
@@ -34,17 +33,17 @@ public class AccumulatorTest {
 	public void test() throws Exception{
 		org.junit.Assert.assertNotNull(space);
 		
-		PollingContainerAgentCommand cmd=PollingContainerAgentCommand.newAccumulator("test",1,1);
+		DynaAccumulatorAgentCommand cmd=DynaAccumulatorAgentCommand.newAccumulator("test",1,1);
+		cmd.getParms().put("code","changes.increment(fields[0],1);"+
+				"changes.increment(\"count\",fields[3].toInteger());"
+				);
 		space.write(cmd);
-		space.write(new AccumulatorDef("test","groovy",
-				"changes.increment(event[0],1);"+
-				"changes.increment(\"count\",event[3].toInteger());"
-				));
-		Thread.sleep(1000);
+
+		Thread.sleep(3000);
 		space.write(new Event("test","f1","f2","f3","1"));
 		space.write(new Event("test","f1","f2","f3","3"));
 		space.write(new Event("test","f1","f2","f3","6"));
-		Thread.sleep(5000);
+		Thread.sleep(2000);
 		Accumulator acc=space.read(new Accumulator());
 		
 		assertEquals((Integer)3,acc.getValues().get("f1"));

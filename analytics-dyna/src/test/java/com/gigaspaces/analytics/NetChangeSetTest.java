@@ -1,7 +1,5 @@
 package com.gigaspaces.analytics;
 
-import java.util.Map;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -10,8 +8,6 @@ import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.space.UrlSpaceConfigurer;
 
-import com.gigaspaces.annotation.pojo.SpaceClass;
-import com.gigaspaces.annotation.pojo.SpaceId;
 import com.gigaspaces.query.IdQuery;
 
 public class NetChangeSetTest {
@@ -70,7 +66,6 @@ public class NetChangeSetTest {
 	 */
 	@Test
 	public void testNet(){
-		//space.write(new CTest(0));
 		space.write(new Accumulator("test"));
 		AccumulatorChangeSet cs=new AccumulatorChangeSet();
 		
@@ -88,81 +83,14 @@ public class NetChangeSetTest {
 		cs.decrement("ffloat",1F); 
 		
 		cs.summarize();
-//		space.change(new IdQuery<CTest>(CTest.class,0),cs);
 		space.change(new IdQuery<Accumulator>(Accumulator.class,"test"),cs);
 		
-//		CTest after=space.read(new CTest());
 		Accumulator after=space.read(new Accumulator());
 		org.junit.Assert.assertNotNull(after);
-/*		org.junit.Assert.assertEquals((int)1,(int)after.getFint());
-		org.junit.Assert.assertEquals((long)1,(long)after.getFlong());
-		org.junit.Assert.assertEquals(1D,after.getFdouble(),.001D);
-		org.junit.Assert.assertEquals(1F,after.getFint(),.001F);*/ 
 		org.junit.Assert.assertEquals(1,after.getValues().get("fint"));
 		org.junit.Assert.assertEquals(1L,after.getValues().get("flong"));
 		org.junit.Assert.assertEquals(1D,(Double)after.getValues().get("fdouble"),.001D);
 		org.junit.Assert.assertEquals(1F,(Float)after.getValues().get("ffloat"),.001F); 
 	}
 	
-
-	@SpaceClass
-	public static class CTest{
-		private Integer fint;
-		private Long flong;
-		private Double fdouble;
-		private Float ffloat;
-		private Short fshort;
-		private Byte fbyte;
-		
-		public Integer getFint() {
-			return fint;
-		}
-		public void setFint(Integer fint) {
-			this.fint = fint;
-		}
-		public Long getFlong() {
-			return flong;
-		}
-		public void setFlong(Long flong) {
-			this.flong = flong;
-		}
-		public Double getFdouble() {
-			return fdouble;
-		}
-		public void setFdouble(Double fdouble) {
-			this.fdouble = fdouble;
-		}
-		public Float getFfloat() {
-			return ffloat;
-		}
-		public void setFfloat(Float ffloat) {
-			this.ffloat = ffloat;
-		}
-		public Short getFshort() {
-			return fshort;
-		}
-		public void setFshort(Short fshort) {
-			this.fshort = fshort;
-		}
-		public Byte getFbyte() {
-			return fbyte;
-		}
-		public void setFbyte(Byte fbyte) {
-			this.fbyte = fbyte;
-		}
-
-		private Integer id;
-		
-		public CTest(){}
-		public CTest(int id){this.id=id;}
-
-		@SpaceId
-		public Integer getId() {
-			return id;
-		}
-
-		public void setId(Integer id) {
-			this.id = id;
-		} 
-	}
 }

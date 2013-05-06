@@ -128,7 +128,7 @@ public class DynaAccumulatorContainer  {
 				try {
 					log.info("loading script, lang:"+accdef.getLanguage());
 					synchronized(this){
-						script=((Compilable)engine).compile("events.each{event->"+accdef.getCode()+"}");
+						script=((Compilable)engine).compile("events.each{fields->"+accdef.getCode()+"}");
 					}
 					log.info("compile complete");
 				} catch (ScriptException e) {

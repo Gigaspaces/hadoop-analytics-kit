@@ -17,7 +17,7 @@ import com.gigaspaces.annotation.pojo.SpaceRouting;
  */
 @SpaceClass
 public class Accumulator {
-	private String name;
+	private String name=null;
 	private Map<String,?> values=null;
 	
 	public Accumulator(){}
