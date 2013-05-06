@@ -7,6 +7,12 @@ import java.util.Map;
 
 import com.google.common.collect.Lists;
 
+/**
+ * Passed to user event mapper code to collect tokens produced by parsing REST PUT content.
+ * 
+ * @author DeWayne
+ *
+ */
 public class OutputCollector {
 	private List<Map<String,List<String>>> vals = new ArrayList<Map<String,List<String>>>();
 	

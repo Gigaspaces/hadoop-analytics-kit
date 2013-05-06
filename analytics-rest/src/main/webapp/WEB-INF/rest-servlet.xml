@@ -15,5 +15,5 @@
 		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" />
 
 	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver" />
-	<bean id="testView" class="org.springframework.web.servlet.view.json.MappingJacksonJsonView"/>
+	<bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJacksonJsonView"/>
 </beans>

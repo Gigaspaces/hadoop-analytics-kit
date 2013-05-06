@@ -1,14 +1,14 @@
 package com.gigaspaces.analytics.rest;
 
-import java.text.DateFormat;
+import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
@@ -20,62 +20,161 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openspaces.core.GigaSpace;
-import org.openspaces.core.GigaSpaceConfigurer;
-import org.openspaces.core.space.UrlSpaceConfigurer;
+import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.events.adapter.SpaceDataEvent;
 import org.openspaces.events.notify.SimpleNotifyContainerConfigurer;
 import org.openspaces.events.notify.SimpleNotifyEventListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.gigaspaces.annotation.pojo.SpaceClass;
+import com.gigaspaces.analytics.Accumulator;
+import com.gigaspaces.analytics.DynaAccumulatorAgentCommand;
+import com.gigaspaces.analytics.DynaAccumulatorAgentCommand.MessageType;
+import com.gigaspaces.analytics.Event;
 
 /**
- * Handles requests for the application home page.
+ * Implements REST API.  NOTE, WON'T WORK WITH A PARTITIONED SPACE (YET)
  */
 @Controller
-public class RestController {
+public class RestController{
 	private static final Logger log = Logger.getLogger(RestController.class.getName());
-	SimpleNotifyEventListenerContainer notifyEventListenerContainer;
-	ScriptEngine engine;
+	private ClusterInfo clusterInfo;
+	private int primaryCount=0;
+	private SimpleNotifyEventListenerContainer notifyEventListenerContainer;
+	private ScriptEngine engine;
 	private String mapperLanguage="groovy"; //groovy as default
-	EventMapper mapper;
-	CompiledScript script;
-	@Autowired ServletContext context;
-	GigaSpace space;
-	
+	private EventMapper mapper;
+	private CompiledScript script;
+	private @Autowired ServletContext context;
+	private GigaSpace space;
+
 	public RestController(){
 		log.info("constructor");
 	}
-	
+
 	/**
 	 * Simply selects the home view to render by returning its name.
 	 */
-	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public ModelAndView home(Locale locale, Model model) {
-		Date date = new Date();
-		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
-		
-		ModelAndView mv=new ModelAndView("ItemView");
-		mv.addObject(new Item(space==null?"null":space.toString()));
-		return mv;
-	}
-	
 	@RequestMapping(value="/eventMapper", method= RequestMethod.GET)
-	public ModelAndView getEventMapper(){
-		ModelAndView mv=new ModelAndView("ItemView");
-		mv.addObject(mapper);
+	public ModelAndView getEventMapper(HttpServletResponse response)throws Exception{
+		ModelAndView mv=new ModelAndView("jsonView");
+		if(mapper==null){
+			throw new ResourceNotFoundException();
+		}
+		else{
+			mv.addObject(mapper);
+		}
 		return mv;
 	}
 
 	/**
-	 * Write/update the event mapper.  Expects json body with a two entries
+	 * Returns list of defined accumulators
+	 * 
+	 * @return
+	 */
+	@RequestMapping(value="/accumulators", method= RequestMethod.GET)
+	public ModelAndView getAccumulators(){
+		ModelAndView mv=new ModelAndView("jsonView");
+		Accumulator[] accs=space.readMultiple(new Accumulator());
+		if(accs!=null){
+			mv.addObject(accs);
+		}
+		else{
+			mv.addObject(new Accumulator[0]);
+		}
+		return mv;
+	}
+
+	/**
+	 * Gets the named accumulator
+	 * 
+	 * @param name
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/accumulator/{name}", method= RequestMethod.GET)
+	public ModelAndView getAccumulator(@PathVariable String name,HttpServletResponse response)throws Exception{
+		ModelAndView mv=new ModelAndView("jsonView");
+		Accumulator acc=space.readById(Accumulator.class,name);
+		if(acc!=null){
+			mv.addObject(acc);
+		}
+		else{
+			throw new ResourceNotFoundException();
+		}
+		return mv;
+	}
+
+	/**
+	 * Deletes an accumulator (both container and data)
+	 * 
+	 * @param name
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/accumulator/{name}",method=RequestMethod.DELETE)
+	@ResponseBody
+	public String deleteAccumulator(@PathVariable String name, HttpServletResponse response)throws Exception{
+		executeCommand(DynaAccumulatorAgentCommand.deleteAccumulator(name));
+		response.setStatus(HttpServletResponse.SC_OK);
+		return String.format("accumulator %s deleted",name);
+
+	}
+
+	/**
+	 * Creates a new accumulator
+	 * 
+	 * @param name
+	 * @param body
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/accumulator/{name}",method=RequestMethod.POST)
+	@ResponseBody
+	public String createAccumulator(@PathVariable String name,@RequestBody String body,HttpServletResponse response)throws Exception{
+		body=URLDecoder.decode(body,"utf-8");
+		log.info("create accumulator called. body="+body);
+
+		Accumulator acc=space.readById(Accumulator.class,name);
+
+		if(acc!=null){
+			throw new AlreadyExistsException();
+		}
+
+		ObjectMapper om=new ObjectMapper();
+		DynaAccumulatorAgentCommand cmd;
+		try {
+			cmd=om.readValue(body,DynaAccumulatorAgentCommand.class);
+			cmd.setMessageType(MessageType.REQUEST);
+			cmd.setCommand("new");
+			cmd.getParms().put("name",name);
+			cmd.setId(UUID.randomUUID().toString());
+		} catch (Exception e){
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			return("exception parsing request body:"+e.getMessage());
+		}
+
+		log.info("writing agent command");
+
+		executeCommand(cmd);
+
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		return String.format("accumulator %s created",name);
+	}
+
+	/**
+	 * Write/update the event mapper.  Expects json body with two entries
 	 * map: "language" and "code" for keys.  
 	 * 
 	 * Example:
@@ -86,7 +185,7 @@ public class RestController {
 	 * @param response
 	 * @return
 	 */
-	@RequestMapping(value="/eventMapper", method= RequestMethod.POST)
+	@RequestMapping(value="/eventMapper", method= RequestMethod.PUT)
 	@ResponseBody
 	public ModelAndView postEventMapper(@RequestBody String body, HttpServletResponse response){
 		ObjectMapper om=new ObjectMapper();
@@ -94,16 +193,16 @@ public class RestController {
 		try {
 			json=om.readValue(body, Map.class);
 		} catch (Exception e){
-			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			ModelAndView mv=new ModelAndView("ItemView");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			ModelAndView mv=new ModelAndView("jsonView");
 			mv.addObject(e);
 			return(mv);
 		}
 		String language=(String)json.get("language");
 		String code=(String)json.get("code");
 		if(language==null || code==null){
-			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			ModelAndView mv=new ModelAndView("ItemView");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			ModelAndView mv=new ModelAndView("jsonView");
 			mv.addObject("null code or language");
 			return(mv);
 		}
@@ -111,16 +210,28 @@ public class RestController {
 		ev.setCode(code);
 		ev.setLanguage(language);
 		space.write(ev);
-		ModelAndView mv=new ModelAndView("ItemView");
+		ModelAndView mv=new ModelAndView("jsonView");
+		response.setStatus(HttpServletResponse.SC_CREATED);
 		return mv;
 	}
-	
-	@RequestMapping(value="/events",method=RequestMethod.PUT)
+
+	/**
+	 * This where events are inserted into the engine.  The POST body
+	 * is the source of data, and the user supplied EventMapper is
+	 * responsible for transforming the body into one or more events,
+	 * using the supplied OutputCollector.
+	 * 
+	 * @param body
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="/events",method=RequestMethod.POST)
 	@ResponseBody
-	public String addEvents(@RequestBody String body, HttpServletResponse response){
-		
+	public String addEvents(@RequestBody String body, HttpServletResponse response)throws Exception{
+		body=URLDecoder.decode(body,"utf-8");
+
 		if(script==null){
-			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return "no handler script defined";
 		}
 		try {
@@ -130,60 +241,78 @@ public class RestController {
 			script.eval();
 			log.info("collector returned cnt="+collector.getVals().size());
 			if(collector.getVals().size()==0)return "";
-			List<Item> objs=new ArrayList<Item>();
+			List<Event> objs=new ArrayList<Event>();
 			for(Map<String,List<String>> val:collector.getVals()){
 				for(Map.Entry<String,List<String>> entry:val.entrySet()){
-					Item obj=new Item(entry.getKey());
-					obj.fields=new ArrayList<String>();
-					obj.fields.addAll(entry.getValue());
+					Event obj=new Event(entry.getKey());
+					obj.setFields(new ArrayList<String>());
+					obj.getFields().addAll(entry.getValue());
 					objs.add(obj);
 				}
 			}
 			space.writeMultiple(objs.toArray());
-			
+
 		} catch (ScriptException e) {
 			throw new RuntimeException(e);
 		}
-		ModelAndView mv=new ModelAndView("ItemView");
-		mv.addObject(new Item(space==null?"null":space.toString()));
+		ModelAndView mv=new ModelAndView("jsonView");
+		mv.addObject(new Event(space==null?"null":space.toString()));
+		response.setStatus(HttpServletResponse.SC_CREATED);
 		return "";
 	}
-	
+
 	@PostConstruct
 	public void postConstruct(){
 		log.info("in post construct");
-		//set up event listener so dynamic rest handler can be loaded
+
+		clusterInfo=(ClusterInfo)context.getAttribute("clusterInfo");
 		space=(GigaSpace)context.getAttribute("gigaSpace");
-		
+		primaryCount=clusterInfo.getNumberOfInstances()/(clusterInfo.getNumberOfBackups()+1);
+
+		engine=new ScriptEngineManager().getEngineByName(mapperLanguage);
+		if(!(engine instanceof Compilable))throw new RuntimeException("language "+mapperLanguage+" not compilable");
+
+		//create default EventMapper (simple String split)
+		try {
+			script=((Compilable)engine).compile("collector.add(\"event\",payload.split())");
+		} catch (ScriptException e1) {
+			throw new RuntimeException(e1);
+		}
+
+		//set up event listener so dynamic rest handler can be loaded
+
 		notifyEventListenerContainer = new SimpleNotifyContainerConfigurer(space)
-        .template(new EventMapper())
-        .eventListenerAnnotation(new Object() {
-            @SpaceDataEvent
-            public void eventHappened(EventMapper event) {
-            	log.info("eventHappened");
-            	if(!mapperLanguage.equals(event.getLanguage())){
-            		log.info("invalid language:"+event.getLanguage());
-            		throw new RuntimeException("invalid language:"+event.getLanguage());
-            	}
-            	if(event.getCode()==null || event.getCode().length()==0){
-            		log.info("null code supplied");
-            		throw new RuntimeException("null code supplied");
-            	}
-            	mapper=event;
-           		try {
-           			log.info("loading script, lang:"+mapper.getLanguage());
+		.template(new EventMapper())
+		.eventListenerAnnotation(new Object() {
+			@SpaceDataEvent
+			public void eventHappened(EventMapper event) {
+				log.info("eventHappened");
+				if(!mapperLanguage.equals(event.getLanguage())){
+					log.info("invalid language:"+event.getLanguage());
+					throw new RuntimeException("invalid language:"+event.getLanguage());
+				}
+				if(event.getCode()==null || event.getCode().length()==0){
+					log.info("null code supplied");
+					throw new RuntimeException("null code supplied");
+				}
+				mapper=event;
+				try {
+					log.info("loading script, lang:"+mapper.getLanguage());
 					script=((Compilable)engine).compile(mapper.getCode());
 					log.info("compile complete");
 				} catch (ScriptException e) {
 					throw new RuntimeException(e);
 				}
-            }
-        }).notifyContainer();		
-		
-		engine=new ScriptEngineManager().getEngineByName(mapperLanguage);
-		if(!(engine instanceof Compilable))throw new RuntimeException("language "+mapperLanguage+" not compilable");
+			}
+		}).notifyContainer();		
+		notifyEventListenerContainer.start();
 	}
-	
+
+	@PreDestroy
+	private void preDestroy(){
+		if(notifyEventListenerContainer!=null)notifyEventListenerContainer.destroy();
+	}
+
 	public String getHandlerLanguage() {
 		return mapperLanguage;
 	}
@@ -191,63 +320,60 @@ public class RestController {
 	public void setHandlerLanguage(String mapperLanguage) {
 		this.mapperLanguage = mapperLanguage;
 	}
-	
-	public static void main(String[] args)throws Exception{
-		ObjectMapper om=new ObjectMapper();
-		Map<?,?> m=om.readValue("{\"key\":[\"value\"]}", Map.class);
-		System.out.println(m);
-		System.out.println(m.get("key").getClass().getName());
-		if(true)System.exit(0);
-		
-		UrlSpaceConfigurer us=new UrlSpaceConfigurer("jini://*/*/space");
-		GigaSpace space=new GigaSpaceConfigurer(us.space()).gigaSpace();
-		EventMapper e=new EventMapper();
-		e.setLanguage("groovy");
-		e.setCode("collector.add(\"blorf\",\"a\",\"b\")");
-		space.write(e);
-		us.destroy();
-		
-		/*ScriptEngine e=new ScriptEngineManager().getEngineByName("groovy");
-		Bindings b=e.getBindings(ScriptContext.GLOBAL_SCOPE);
-		b.put("payload", "blorf");
-		CompiledScript script=((Compilable)e).compile("[\"a\":payload]");
-		Object obj=script.eval();
-		log.info(obj);*/
+
+	private List<DynaAccumulatorAgentCommand> executeCommand(DynaAccumulatorAgentCommand cmd)throws Exception{
+		DynaAccumulatorAgentCommand template=new DynaAccumulatorAgentCommand();
+		template.setId(cmd.getId());
+		template.setMessageType(MessageType.RESPONSE);
+
+		List<DynaAccumulatorAgentCommand> responses=Scatterer.scatter(space,cmd,template,5000L);
+
+		if(responses.size()<primaryCount){
+			throw new PartialResponseException(String.format("only %d of %d agents responded",responses.size(),primaryCount));
+		}
+		for(DynaAccumulatorAgentCommand resp:responses){
+			if(resp.getSuccess()!=true){
+				throw new CommandFailedException();
+			}
+		}
+		return responses;
 	}
 
-	@SpaceClass
-	public static class Item{
-		private String name;
-		private List<String> fields;
-		private Boolean processed;
-		
-		public Item(){}
-		
-		public Item(String name){
-			this.name=name;
-			fields=new ArrayList<String>();
-			processed=false;
-		}
+}
 
-		public List<String> getFields() {
-			return fields;
-		}
-		public void setFields(List<String> fields) {
-			this.fields = fields;
-		}
-		public Boolean getProcessed() {
-			return processed;
-		}
-		public void setProcessed(Boolean processed) {
-			this.processed = processed;
-		}
+/////////////////////////
+// EXCEPTIONS
+/////////////////////////
 
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
+@SuppressWarnings("serial")
+@ResponseStatus(value=HttpStatus.NOT_FOUND)
+class ResourceNotFoundException extends Exception{
+	public ResourceNotFoundException(){}
+	public ResourceNotFoundException(String message){
+		super(message);
+	}
+}
+@SuppressWarnings("serial")
+@ResponseStatus(value=HttpStatus.CONFLICT)
+class AlreadyExistsException extends Exception{
+	public AlreadyExistsException(){}
+	public AlreadyExistsException(String message){
+		super(message);
+	}
+}
+@SuppressWarnings("serial")
+@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
+class PartialResponseException extends Exception{
+	public PartialResponseException(){}
+	public PartialResponseException(String message){
+		super(message);
+	}
+}
+@SuppressWarnings("serial")
+@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
+class CommandFailedException extends Exception{
+	public CommandFailedException(){}
+	public CommandFailedException(String message){
+		super(message);
 	}
 }

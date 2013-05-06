@@ -1,16 +1,12 @@
 package com.gigaspaces.analytics.rest;
 
-import java.util.HashMap;
-
 import com.gigaspaces.annotation.pojo.SpaceClass;
 
 /**
- * Event translators are simple converters that change raw events posted to the
- * REST.  They must be implemented in a supported JVM language (Groovy for now),
- * accept a String as input (a POST body), and return a list of maps of String
- * value pairs. The handler must be able to handle any arbitrary event or
- * group of events.  The output maps must each have a key "_name_", which is
- * later used to trigger event handlers.
+ * Event mappers are simple converters that change raw events posted to the
+ * REST API.  They must be implemented in a supported JVM language (Groovy for now),
+ * accept a String as input (a POST body), and using the supplied OutputCollector,
+ * convert the body into one or more named lists (@see com.gigaspaces.analytics.Event)
  * 
  * @author DeWayne
  *
