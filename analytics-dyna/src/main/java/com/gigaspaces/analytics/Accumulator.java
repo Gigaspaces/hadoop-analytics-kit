@@ -3,6 +3,8 @@ package com.gigaspaces.analytics;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import com.gigaspaces.annotation.pojo.SpaceClass;
 import com.gigaspaces.annotation.pojo.SpaceId;
 import com.gigaspaces.annotation.pojo.SpaceRouting;
@@ -35,6 +37,7 @@ public class Accumulator {
 		this.name = name;
 	}
 	@SpaceRouting
+	@JsonIgnore
 	public Integer getRouting() {
 		return null;
 	}

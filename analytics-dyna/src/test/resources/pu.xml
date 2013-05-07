@@ -14,17 +14,71 @@
       http://www.openspaces.org/schema/sla http://www.openspaces.org/schema/sla/openspaces-sla.xsd">
 
 	<os-core:annotation-support />
- 	<context:component-scan base-package="com.gigaspaces.analytics" />
- 	<os-core:giga-space-context/> 
-  	<os-events:annotation-support /> 
-	<tx:annotation-driven transaction-manager="txm" />  	
+	<context:component-scan base-package="com.gigaspaces.analytics" />
+	<os-core:giga-space-context />
+	<os-events:annotation-support />
 
-	<os-core:space id="ijspace" url="/./space"/>
-		
+
+	<bean id="propertiesConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<!-- defaults -->
+		<property name="properties">
+			<props>
+				<prop key="space.name">space</prop>
+				<prop key="hdfs.uri">hdfs://10.143.165.220:54310</prop>
+				<prop key="hdfs.user">ec2-user</prop>
+			</props>
+		</property>
+	</bean>
+
+	<os-core:space id="ijspace" url="/./${space.name}" />
+
 	<os-core:distributed-tx-manager id="txm"
 		default-timeout="5000" />
 	<os-core:giga-space id="space" space="ijspace"
 		tx-manager="txm" />
 
-	
-	</beans>
+	<bean id="handler"
+		class="com.gigaspaces.analytics.archive.DynamicHdfsArchiveHandler">
+		<constructor-arg>
+			<bean class="com.gigaspaces.hdfs.serializers.ToStringHdfsSerializer" />
+		</constructor-arg>
+		<property name="fs">
+			<bean class="com.gigaspaces.hdfs.LazyHdfsFileSystem">
+				<constructor-arg value="${hdfs.uri}" />
+				<constructor-arg value="${hdfs.user}" />
+			</bean>
+		</property>
+		<property name="strategy">
+			<bean class="com.gigaspaces.hdfs.strategies.SimplePatternPathStrategy">
+				<constructor-arg value="/files/%D-%T_%p" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="archiverContainer" class="com.gigaspaces.analytics.archive.DynamicArchiverContainer">
+		<constructor-arg ref="txm" />
+		<constructor-arg ref="handler" />
+		<constructor-arg>
+			<bean class="com.gigaspaces.analytics.Event">
+				<property name="processed" value="true" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg value="100" />
+	</bean>
+
+	<os-events:polling-container id="eventContainer"
+		giga-space="space">
+		 <os-events:receive-operation-handler>
+	        <bean class="org.openspaces.events.polling.receive.SingleTakeReceiveOperationHandler" />
+    	</os-events:receive-operation-handler>
+ 		<os-events:dynamic-template ref="archiverContainer" />
+
+		<os-events:listener>
+			<os-events:method-adapter method-name="commandHandler">
+				<os-events:delegate ref="archiverContainer"/>
+			</os-events:method-adapter>
+		</os-events:listener>
+	</os-events:polling-container>
+
+</beans>

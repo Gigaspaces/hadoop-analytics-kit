@@ -82,7 +82,8 @@ public class DynaAccumulatorAgent {
 				
 				Event template=new Event();
 				template.setName(ename);
-				DynaAccumulatorContainer das=new DynaAccumulatorContainer(space,ename,template);
+				template.setProcessed(false);
+				DynaAccumulatorContainer das=new DynaAccumulatorContainer(space,ename,template,"groovy",code);
 				MultiTakeReceiveOperationHandler receiveHandler = new MultiTakeReceiveOperationHandler();
 				receiveHandler.setMaxEntries(batchSize);
 				SimplePollingEventListenerContainer container = new SimplePollingContainerConfigurer(space)
@@ -96,11 +97,11 @@ public class DynaAccumulatorAgent {
 				containers.put(ename, container);
 				
 				//Now deploy the accumulator code
-				AccumulatorDef def=new AccumulatorDef();
+				/**AccumulatorDef def=new AccumulatorDef();
 				def.setName(ename);
 				def.setLanguage("groovy");  //hardcoded for now (simplicity)
 				def.setCode(code);
-				space.write(def,10000L);
+				space.write(def,10000L);*/
 				
 				//Wait for accumulator to appear
 				Accumulator atemplate=new Accumulator();
