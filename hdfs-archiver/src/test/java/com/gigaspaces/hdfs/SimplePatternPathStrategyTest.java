@@ -4,9 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.junit.Test;
+import org.openspaces.archiver.hdfs.FileOutputStream;
+import org.openspaces.archiver.hdfs.strategies.SimplePatternPathStrategy;
 import org.openspaces.core.cluster.ClusterInfo;
 
-import com.gigaspaces.hdfs.strategies.SimplePatternPathStrategy;
 
 public class SimplePatternPathStrategyTest {
 	@Test

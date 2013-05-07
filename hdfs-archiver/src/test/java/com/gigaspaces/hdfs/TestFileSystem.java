@@ -2,6 +2,9 @@ package com.gigaspaces.hdfs;
 
 import java.util.logging.Logger;
 
+import org.openspaces.archiver.hdfs.FileOutputStream;
+import org.openspaces.archiver.hdfs.FileSystem;
+
 
 public class TestFileSystem implements FileSystem {
 	private static final Logger log=Logger.getLogger(TestFileSystem.class.getName());

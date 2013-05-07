@@ -1,5 +1,8 @@
 package com.gigaspaces.hdfs;
 
+import org.openspaces.archiver.hdfs.FileOutputStream;
+import org.openspaces.archiver.hdfs.FileSystem;
+import org.openspaces.archiver.hdfs.PathStrategy;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.core.cluster.ClusterInfoAware;
 

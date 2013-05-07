@@ -19,12 +19,15 @@
 
 	<bean id="propertiesConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE"/>
 		<!-- defaults -->
 		<property name="properties">
 			<props>
 				<prop key="space.name">space</prop>
-				<prop key="hdfs.uri">hdfs://10.143.165.220:54310</prop>
-				<prop key="hdfs.user">ec2-user</prop>
+				<prop key="hdfs.uri">hdfs://0.0.0.0:54310</prop>
+				<prop key="hdfs.user">user</prop>
+				<prop key="hdfs.naming.strategy">/files/%D-%T_%p</prop>
+				<prop key="archiver.batch.size">100</prop>
 			</props>
 		</property>
 	</bean>
@@ -38,35 +41,47 @@
 	<os-core:giga-space id="space" space="ijspace"
 		tx-manager="transactionManager" />
 
-	<!--  ARCHIVER RELATED CONFIG  -->
-	<!-- 
-	<bean id="hdfsArchiveHandler" class="com.gigaspaces.hdfs.HdfsArchiveHandler">
+	<bean id="handler"
+		class="org.openspaces.analytics.archive.DynamicHdfsArchiveHandler">
 		<constructor-arg>
-			<bean class="com.gigaspaces.hdfs.serializers.ToStringHdfsSerializer" />
+			<bean class="org.openspaces.archiver.hdfs.serializers.ToStringHdfsSerializer" />
 		</constructor-arg>
 		<property name="fs">
-			<bean class="com.gigaspaces.hdfs.HdfsFileSystem">
+			<bean class="org.openspaces.archiver.hdfs.LazyHdfsFileSystem">
 				<constructor-arg value="${hdfs.uri}" />
 				<constructor-arg value="${hdfs.user}" />
 			</bean>
 		</property>
 		<property name="strategy">
-			<bean class="com.gigaspaces.hdfs.strategies.SimplePatternPathStrategy">
-				<constructor-arg value="/files/%D-%T_%p" />
+			<bean class="org.openspaces.archiver.hdfs.strategies.SimplePatternPathStrategy">
+				<constructor-arg value="${hdfs.naming.strategy}" />
 			</bean>
 		</property>
 	</bean>
-	
--->
-	<!-- TODO ARCHIVER NEEDS TO BE DYNAMIC DEPLOY/UPDATE -->
-<!-- 	<bean id="archiveFilter"
-		class="com.gigaspaces.analytics.ProcessedEventFilter" />
 
-	<bean id="archiver" class="org.openspaces.archive.ArchivePollingContainer">
-		<property name="gigaSpace" ref="space" />
-		<property name="archiveHandler" ref="hdfsArchiveHandler" />
-		<property name="template" ref="archiveFilter" />
-		<property name="batchSize" value="1000" />
+	<bean id="archiverContainer" class="org.openspaces.analytics.archive.DynamicArchiverContainer">
+		<constructor-arg ref="txm" />
+		<constructor-arg ref="handler" />
+		<constructor-arg>
+			<bean class="org.openspaces.analytics.Event">
+				<property name="processed" value="true" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg value="${archiver.batch.size}" />
 	</bean>
--->
+
+	<os-events:polling-container id="eventContainer"
+		giga-space="space">
+		 <os-events:receive-operation-handler>
+	        <bean class="org.openspaces.events.polling.receive.SingleTakeReceiveOperationHandler" />
+    	</os-events:receive-operation-handler>
+ 		<os-events:dynamic-template ref="archiverContainer" />
+
+		<os-events:listener>
+			<os-events:method-adapter method-name="commandHandler">
+				<os-events:delegate ref="archiverContainer"/>
+			</os-events:method-adapter>
+		</os-events:listener>
+	</os-events:polling-container>
+
 </beans>
