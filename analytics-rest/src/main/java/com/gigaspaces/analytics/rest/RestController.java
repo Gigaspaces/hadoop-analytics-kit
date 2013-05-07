@@ -9,11 +9,9 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -21,8 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.cluster.ClusterInfo;
-import org.openspaces.events.adapter.SpaceDataEvent;
-import org.openspaces.events.notify.SimpleNotifyContainerConfigurer;
+import org.openspaces.dynamic.DynamicBase;
 import org.openspaces.events.notify.SimpleNotifyEventListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,7 +41,7 @@ import com.gigaspaces.analytics.Event;
  * Implements REST API.  NOTE, WON'T WORK WITH A PARTITIONED SPACE (YET)
  */
 @Controller
-public class RestController{
+public class RestController extends DynamicBase{
 	private static final Logger log = Logger.getLogger(RestController.class.getName());
 	private ClusterInfo clusterInfo;
 	private int primaryCount=0;
@@ -54,10 +51,10 @@ public class RestController{
 	private EventMapper mapper;
 	private CompiledScript script;
 	private @Autowired ServletContext context;
-	private GigaSpace space;
 
 	public RestController(){
-		log.info("constructor");
+		//Define default mapper
+		super(null,"restController","groovy","collector.add(\"event\",payload.split())");
 	}
 
 	/**
@@ -269,43 +266,6 @@ public class RestController{
 		space=(GigaSpace)context.getAttribute("gigaSpace");
 		primaryCount=clusterInfo.getNumberOfInstances()/(clusterInfo.getNumberOfBackups()+1);
 
-		engine=new ScriptEngineManager().getEngineByName(mapperLanguage);
-		if(!(engine instanceof Compilable))throw new RuntimeException("language "+mapperLanguage+" not compilable");
-
-		//create default EventMapper (simple String split)
-		try {
-			script=((Compilable)engine).compile("collector.add(\"event\",payload.split())");
-		} catch (ScriptException e1) {
-			throw new RuntimeException(e1);
-		}
-
-		//set up event listener so dynamic rest handler can be loaded
-
-		notifyEventListenerContainer = new SimpleNotifyContainerConfigurer(space)
-		.template(new EventMapper())
-		.eventListenerAnnotation(new Object() {
-			@SpaceDataEvent
-			public void eventHappened(EventMapper event) {
-				log.info("eventHappened");
-				if(!mapperLanguage.equals(event.getLanguage())){
-					log.info("invalid language:"+event.getLanguage());
-					throw new RuntimeException("invalid language:"+event.getLanguage());
-				}
-				if(event.getCode()==null || event.getCode().length()==0){
-					log.info("null code supplied");
-					throw new RuntimeException("null code supplied");
-				}
-				mapper=event;
-				try {
-					log.info("loading script, lang:"+mapper.getLanguage());
-					script=((Compilable)engine).compile(mapper.getCode());
-					log.info("compile complete");
-				} catch (ScriptException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}).notifyContainer();		
-		notifyEventListenerContainer.start();
 	}
 
 	@PreDestroy
@@ -337,6 +297,18 @@ public class RestController{
 			}
 		}
 		return responses;
+	}
+
+	@Override
+	protected void onPreCompile() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void onPostCompile() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

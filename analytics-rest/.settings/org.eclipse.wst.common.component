@@ -8,6 +8,12 @@
         <dependent-module archiveName="analytics-dyna-1.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/analytics-dyna/analytics-dyna">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="hdfs-archiver-1.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/hdfs-archiver/hdfs-archiver">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="dynamic-grid-1.0-SNAPSHOT.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/dynamic-grid/dynamic-grid">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
 		<property name="java-output-path" value="target/classes"/>
         <property name="context-root" value="analytics-rest"/>
 	</wb-module>
