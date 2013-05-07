@@ -19,7 +19,7 @@ public class HdfsArchiveHandler implements ArchiveOperationHandler{
 	private FileOutputStream fsdos;
 	private HdfsSerializer serializer;
 	private PathStrategy strategy;
-
+	
 	public HdfsArchiveHandler(HdfsSerializer serializer){
 		this.serializer=serializer;
 	}
