@@ -31,10 +31,10 @@
 	<os-core:giga-space id="gigaSpace" space="space"
 		tx-manager="transactionManager" />
 
-	<bean id="testFileSystem" class="com.gigaspaces.hdfs.TestFileSystem" />
-	<bean id="strategy" class="com.gigaspaces.hdfs.TestPathStrategy" />
-	<bean id="serializer" class="com.gigaspaces.hdfs.serializers.ToStringHdfsSerializer" />
-	<bean id="hdfsHandler" class="com.gigaspaces.hdfs.HdfsArchiveHandler">
+	<bean id="testFileSystem" class="org.openspaces.archiver.hdfs.TestFileSystem" />
+	<bean id="strategy" class="org.openspaces.archiver.hdfs.TestPathStrategy" />
+	<bean id="serializer" class="org.openspaces.archiver.hdfs.serializers.ToStringHdfsSerializer" />
+	<bean id="hdfsHandler" class="org.openspaces.archiver.hdfs.HdfsArchiveHandler">
 		<constructor-arg ref="serializer" />
 		<property name="fs" ref="testFileSystem" />
 		<property name="strategy" ref="strategy" />

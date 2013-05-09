@@ -60,7 +60,7 @@
 	</bean>
 
 	<bean id="archiverContainer" class="org.openspaces.analytics.archive.DynamicArchiverContainer">
-		<constructor-arg ref="txm" />
+		<constructor-arg ref="transactionManager" />
 		<constructor-arg ref="handler" />
 		<constructor-arg>
 			<bean class="org.openspaces.analytics.Event">

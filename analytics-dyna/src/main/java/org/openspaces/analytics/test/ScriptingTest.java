@@ -1,11 +1,5 @@
 package org.openspaces.analytics.test;
 
-import groovy.util.GroovyScriptEngine;
-
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
 
 // Assess impact of calling scripts many times from event handler
@@ -14,7 +8,7 @@ import javax.script.ScriptEngineManager;
 // Groovy is the clear performance winner.
 
 public class ScriptingTest {
-	private static final int ITERATIONS=10000;
+/*	private static final int ITERATIONS=10000;
 
 	public static void main(String[] args)throws Exception{
 		//GROOVY
@@ -50,7 +44,7 @@ public class ScriptingTest {
 		/**
 		 * Discovered clojure-jsr223 doesn't really support Compilable
 		 */
-		System.out.println("CLOJURE");
+/*		System.out.println("CLOJURE");
 		engine=new ScriptEngineManager().getEngineByName("Clojure");
 		//script=((Compilable)enfgine).compile("var cum;for(var it=0;it<"+ITERATIONS+";it++){ cum=it;} ");
 		//script=((Compilable)engine).compile("(let [cum 0] (dotimes "+ITERATIONS+" (inc cum))");
@@ -67,5 +61,5 @@ public class ScriptingTest {
 		}
 		System.out.println(System.currentTimeMillis()-now);
 		
-	}
+	}*/
 }

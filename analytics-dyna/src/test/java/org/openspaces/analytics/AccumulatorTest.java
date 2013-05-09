@@ -5,9 +5,6 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openspaces.analytics.Accumulator;
-import org.openspaces.analytics.DynaAccumulatorAgentCommand;
-import org.openspaces.analytics.Event;
 import org.openspaces.analytics.archive.DynamicArchiverContainer;
 import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand;
 import org.openspaces.core.GigaSpace;
@@ -60,6 +57,7 @@ public class AccumulatorTest {
 		assertNotNull(acc);
 		assertEquals((Integer)3,acc.getValues().get("f1"));
 		assertEquals((Integer)10,acc.getValues().get("count"));
+		assertEquals(0,space.count(new Event()));  //archiver should have disposed them
 	}
 
 }
