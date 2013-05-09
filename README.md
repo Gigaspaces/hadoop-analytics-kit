@@ -46,3 +46,5 @@ containers that execute user defined logic for performing aggregations.
 * **analytics-dyna-pu** - the is the deployment unit for the analytics engine.  Contains no code of it's own, but deploys code found in _analytics-dyna_.
 
 * **dynamic-grid** - this project contains code that serves as the basis for the dynamic execution in the system.  Providers of updatable logic are consumers of this project.
+
+* **install** - this project contains scripts needed to create an overlay on a XAP installation that provides for easy startup and deployment.  It includes a script to create a zip file to contain the overlay, plus jars and scripts that get placed into various XAP directories, including the master configuration described above.
