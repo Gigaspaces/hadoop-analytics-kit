@@ -1,0 +1,18 @@
+#  Easy Analytics Configuration
+#
+#  Set initial configuration here.  Updates at runtime can be
+#  done via REST API
+
+# HDFS URL as set by fs.default.name in Hadoop installation
+hdfs.uri=hdfs://localhost:50070
+
+# User that archived output will be written as
+hdfs.user=user
+
+# Naming strategy for output files
+hdfs.naming.strategy=/files/%D-%T_%p
+
+# Archiver batch size.  Higher message rates require higher batch sizes
+
+archiver.batch.size=100
+
