@@ -23,3 +23,6 @@ $groovy waitforxap.groovy
 
 $scriptdir/gs.sh deploy -properties $confdir/ea-config.properties $libdir/analytics-dyna-pu.jar
 $scriptdir/gs.sh deploy -properties $confdir/ea-config.properties $libdir/analytics-rest.war
+
+$scriptdir/gs-webui.sh
+

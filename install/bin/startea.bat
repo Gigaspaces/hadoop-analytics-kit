@@ -22,3 +22,9 @@ rem ---------------------
 
 @call %scriptdir%/gs.bat deploy -properties %confdir%\ea-config.properties %libdir%\analytics-dyna-pu.jar
 @call %scriptdir%/gs.bat deploy -properties %confdir%\ea-config.properties %libdir%\analytics-rest.war
+
+@start/b "webui" %scriptdir%/gs-webui.bat
+
+ping -n 5 127.0.0.1 >nul
+
+start /b "" "http://localhost:8099"
