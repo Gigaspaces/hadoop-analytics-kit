@@ -10,7 +10,6 @@
       http://www.openspaces.org/schema/core http://www.openspaces.org/schema/core/openspaces-core.xsd
       http://www.openspaces.org/schema/events http://www.openspaces.org/schema/events/openspaces-events.xsd
       http://www.openspaces.org/schema/remoting http://www.openspaces.org/schema/remoting/openspaces-remoting.xsd
-	  http://www.openspaces.org/schema/core/gateway http://www.openspaces.org/schema/8.0/core/gateway/openspaces-gateway.xsd      
       http://www.openspaces.org/schema/sla http://www.openspaces.org/schema/sla/openspaces-sla.xsd">
 
 	<os-core:annotation-support />

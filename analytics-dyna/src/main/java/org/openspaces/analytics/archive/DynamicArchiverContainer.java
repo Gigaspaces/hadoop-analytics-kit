@@ -1,11 +1,11 @@
 package org.openspaces.analytics.archive;
 
+
+
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 
-import org.openspaces.analytics.DynaAccumulatorAgentCommand;
-import org.openspaces.analytics.DynaAccumulatorAgentCommand.MessageType;
 import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand.Mode;
 import org.openspaces.archive.ArchiveOperationHandler;
 import org.openspaces.archive.ArchivePollingContainer;
@@ -13,8 +13,6 @@ import org.openspaces.archive.ArchivePollingContainerConfigurer;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.context.GigaSpaceContext;
 import org.openspaces.events.DynamicEventTemplateProvider;
-import org.openspaces.events.polling.receive.ReceiveOperationHandler;
-import org.openspaces.events.polling.receive.SingleTakeReceiveOperationHandler;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.gigaspaces.annotation.pojo.SpaceClass;
@@ -116,7 +114,8 @@ public class DynamicArchiverContainer implements DynamicEventTemplateProvider  {
 
 	}
 
-	@SpaceClass
+	//Do not remove the explicit annotation reference: breaks build
+	@com.gigaspaces.annotation.pojo.SpaceClass
 	public static class ArchiverCommand
 	{
 		public static enum Mode{

@@ -11,13 +11,13 @@
 	</properties>
 	<dependencies>
 		<dependency>
-			<groupId>com.gigaspaces</groupId>
+			<groupId>org.openspaces</groupId>
 			<artifactId>hdfs-archiver</artifactId>
 			<version>1.0-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.gigaspaces</groupId>
+			<groupId>org.openspaces</groupId>
 			<artifactId>analytics-dyna</artifactId>
 			<version>1.0-SNAPSHOT</version>
 			<scope>compile</scope>

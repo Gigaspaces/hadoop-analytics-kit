@@ -101,4 +101,8 @@ public class DynaAccumulatorAgentCommand implements Message {
 	public void setSuccess(Boolean success) {
 		this.success = success;
 	}
+	
+	public String toString(){
+		return String.format("{id=%s,type=%s,command=%s,parms=%s",id,messageType,command,parms);
+	}
 }

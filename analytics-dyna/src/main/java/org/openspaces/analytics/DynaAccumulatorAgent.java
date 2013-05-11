@@ -6,7 +6,9 @@ import java.util.logging.Logger;
 
 import org.openspaces.analytics.DynaAccumulatorAgentCommand.MessageType;
 import org.openspaces.core.GigaSpace;
+import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.context.GigaSpaceContext;
+import org.openspaces.core.space.UrlSpaceConfigurer;
 import org.openspaces.events.EventDriven;
 import org.openspaces.events.EventTemplate;
 import org.openspaces.events.adapter.SpaceDataEvent;
@@ -142,6 +144,11 @@ public class DynaAccumulatorAgent {
 				respondFailed(cmd,"container destroy failed:"+t.getMessage());
 				return null;
 			}
+			//delete accumulator object
+			Accumulator acc=new Accumulator();
+			acc.setName(name);
+			space.clear(acc);
+			
 			cmd.setSuccess(true);
 			log.info("container destroyed:"+name);
 			space.write(cmd,10000);
@@ -159,8 +166,10 @@ public class DynaAccumulatorAgent {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		UrlSpaceConfigurer usc=new UrlSpaceConfigurer("jini://*/*/space");
+		GigaSpace space=new GigaSpaceConfigurer(usc.space()).gigaSpace();
+		DynaAccumulatorAgentCommand cmd=DynaAccumulatorAgentCommand.newAccumulator("test",1, 1);
+		space.write(cmd);
 	}
 
 }

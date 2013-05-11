@@ -19,8 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openspaces.analytics.Accumulator;
 import org.openspaces.analytics.DynaAccumulatorAgentCommand;
-import org.openspaces.analytics.Event;
 import org.openspaces.analytics.DynaAccumulatorAgentCommand.MessageType;
+import org.openspaces.analytics.Event;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.dynamic.DynamicBase;
@@ -46,10 +46,8 @@ public class RestController extends DynamicBase{
 	private ClusterInfo clusterInfo;
 	private int primaryCount=0;
 	private SimpleNotifyEventListenerContainer notifyEventListenerContainer;
-	private ScriptEngine engine;
 	private String mapperLanguage="groovy"; //groovy as default
 	private EventMapper mapper;
-	private CompiledScript script;
 	private @Autowired ServletContext context;
 
 	public RestController(){
@@ -125,7 +123,6 @@ public class RestController extends DynamicBase{
 		executeCommand(DynaAccumulatorAgentCommand.deleteAccumulator(name));
 		response.setStatus(HttpServletResponse.SC_OK);
 		return String.format("accumulator %s deleted",name);
-
 	}
 
 	/**
@@ -162,7 +159,7 @@ public class RestController extends DynamicBase{
 			return("exception parsing request body:"+e.getMessage());
 		}
 
-		log.info("writing agent command");
+		log.info("writing agent command:"+cmd);
 
 		executeCommand(cmd);
 
@@ -285,6 +282,8 @@ public class RestController extends DynamicBase{
 		DynaAccumulatorAgentCommand template=new DynaAccumulatorAgentCommand();
 		template.setId(cmd.getId());
 		template.setMessageType(MessageType.RESPONSE);
+		
+		log.info("writing cmd="+cmd);
 
 		List<DynaAccumulatorAgentCommand> responses=Scatterer.scatter(space,cmd,template,5000L);
 
