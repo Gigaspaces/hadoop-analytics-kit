@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:os-core="http://www.openspaces.org/schema/core" xmlns:os-events="http://www.openspaces.org/schema/events"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:os-remoting="http://www.openspaces.org/schema/remoting"
+	xmlns:os-sla="http://www.openspaces.org/schema/sla"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+      http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd        
+      http://www.openspaces.org/schema/core http://www.openspaces.org/schema/core/openspaces-core.xsd
+      http://www.openspaces.org/schema/events http://www.openspaces.org/schema/events/openspaces-events.xsd
+      http://www.openspaces.org/schema/remoting http://www.openspaces.org/schema/remoting/openspaces-remoting.xsd
+		">
+	<os-core:annotation-support />
+	<context:component-scan base-package="org.openspaces.analytics" />
+	<os-core:giga-space-context />
+	<os-events:annotation-support />
+
+
+	<bean id="propertiesConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<!-- defaults -->
+		<property name="properties">
+			<props>
+				<prop key="space.name">space</prop>
+				<prop key="hdfs.uri">hdfs://10.143.165.220:54310</prop>
+				<prop key="hdfs.user">ec2-user</prop>
+			</props>
+		</property>
+	</bean>
+
+	<os-core:space id="ijspace" url="/./${space.name}" />
+
+	<os-core:distributed-tx-manager id="txm"
+		default-timeout="5000" />
+	<os-core:giga-space id="space" space="ijspace"
+		tx-manager="txm" />
+
+	<bean id="handler"
+		class="org.openspaces.analytics.archive.DynamicHdfsArchiveHandler">
+		<constructor-arg>
+			<bean class="org.openspaces.archiver.hdfs.serializers.ToStringHdfsSerializer" />
+		</constructor-arg>
+		<property name="fs">
+			<bean class="org.openspaces.archiver.hdfs.LazyHdfsFileSystem">
+				<constructor-arg value="${hdfs.uri}" />
+				<constructor-arg value="${hdfs.user}" />
+			</bean>
+		</property>
+		<property name="strategy">
+			<bean class="org.openspaces.archiver.hdfs.strategies.SimplePatternPathStrategy">
+				<constructor-arg value="/files/%D-%T_%p" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="archiverContainer" class="org.openspaces.analytics.archive.DynamicArchiverContainer">
+		<constructor-arg ref="space"/>
+		<constructor-arg ref="txm" />
+		<constructor-arg ref="handler" />
+		<constructor-arg>
+			<bean class="org.openspaces.analytics.Event">
+				<property name="processed" value="true" />
+			</bean>
+		</constructor-arg>
+		<constructor-arg value="100" />
+	</bean>
+
+</beans>
