@@ -4,21 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.openspaces.analytics.DynaAccumulatorAgentCommand.MessageType;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.openspaces.analytics.support.AbstractMessageServer;
+import org.openspaces.analytics.support.AsyncMessage.MessageType;
 import org.openspaces.core.GigaSpace;
-import org.openspaces.core.GigaSpaceConfigurer;
-import org.openspaces.core.context.GigaSpaceContext;
-import org.openspaces.core.space.UrlSpaceConfigurer;
-import org.openspaces.events.EventDriven;
-import org.openspaces.events.EventTemplate;
-import org.openspaces.events.adapter.SpaceDataEvent;
-import org.openspaces.events.polling.Polling;
-import org.openspaces.events.polling.ReceiveHandler;
 import org.openspaces.events.polling.SimplePollingContainerConfigurer;
 import org.openspaces.events.polling.SimplePollingEventListenerContainer;
 import org.openspaces.events.polling.receive.MultiTakeReceiveOperationHandler;
-import org.openspaces.events.polling.receive.ReceiveOperationHandler;
-import org.openspaces.events.polling.receive.SingleTakeReceiveOperationHandler;
 
 
 /**
@@ -27,27 +21,28 @@ import org.openspaces.events.polling.receive.SingleTakeReceiveOperationHandler;
  * 
  * @author DeWayne
  */
-@EventDriven @Polling
-public class DynaAccumulatorAgent {
+
+public class DynaAccumulatorAgent extends AbstractMessageServer<DynaAccumulatorAgentCommand>{
 	private static Logger log=Logger.getLogger(DynaAccumulatorAgent.class.getName());
 	private Map<String,SimplePollingEventListenerContainer> containers=new HashMap<String,SimplePollingEventListenerContainer>();
-	@GigaSpaceContext
-	private GigaSpace space;
 
-	@EventTemplate
-	public Object eventTemplate(){
-		DynaAccumulatorAgentCommand template= new DynaAccumulatorAgentCommand();
-		template.setMessageType(MessageType.REQUEST);
-		return template;
+	public DynaAccumulatorAgent(GigaSpace space) {
+		super(space, DynaAccumulatorAgentCommand.class);
+	}
+	
+	@PostConstruct
+	public void postConstruct(){
+		log.info("starting listener");
+		startListener();
 	}
 
-	@ReceiveHandler
-	public ReceiveOperationHandler receiveHandler(){
-		return new SingleTakeReceiveOperationHandler();
+	@PreDestroy
+	public void preDestroy(){
+		super.stopListener();
 	}
-
-	@SpaceDataEvent
-	public DynaAccumulatorAgentCommand commandHandler(DynaAccumulatorAgentCommand cmd){
+		
+	@Override
+	public DynaAccumulatorAgentCommand handleMessage(DynaAccumulatorAgentCommand cmd){
 		cmd.setMessageType(MessageType.RESPONSE);
 		if(cmd.getCommand().equals("new")){
 			try{
@@ -98,13 +93,6 @@ public class DynaAccumulatorAgent {
 				container.start();
 				containers.put(ename, container);
 				
-				//Now deploy the accumulator code
-				/**AccumulatorDef def=new AccumulatorDef();
-				def.setName(ename);
-				def.setLanguage("groovy");  //hardcoded for now (simplicity)
-				def.setCode(code);
-				space.write(def,10000L);*/
-				
 				//Wait for accumulator to appear
 				Accumulator atemplate=new Accumulator();
 				atemplate.setName(ename);
@@ -117,7 +105,7 @@ public class DynaAccumulatorAgent {
 				if(acc==null){
 					respondFailed(cmd,"accumulator creation timed out");
 				}
-				cmd.setSuccess(true);
+				cmd.setHadError(false);
 			}
 			catch(Throwable e){
 				respondFailed(cmd,e.getMessage());
@@ -149,7 +137,7 @@ public class DynaAccumulatorAgent {
 			acc.setName(name);
 			space.clear(acc);
 			
-			cmd.setSuccess(true);
+			cmd.setHadError(false);
 			log.info("container destroyed:"+name);
 			space.write(cmd,10000);
 		}
@@ -157,19 +145,11 @@ public class DynaAccumulatorAgent {
 	}
 	
 	private void respondFailed(DynaAccumulatorAgentCommand cmd,String message){
-		cmd.setSuccess(false);
+		cmd.setHadError(true);
+		cmd.setErrorMessage(message);
 		log.severe(message);
 		space.write(cmd,10000);
 	}
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		UrlSpaceConfigurer usc=new UrlSpaceConfigurer("jini://*/*/space");
-		GigaSpace space=new GigaSpaceConfigurer(usc.space()).gigaSpace();
-		DynaAccumulatorAgentCommand cmd=DynaAccumulatorAgentCommand.newAccumulator("test",1, 1);
-		space.write(cmd);
-	}
 
 }

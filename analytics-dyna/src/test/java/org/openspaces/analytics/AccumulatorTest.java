@@ -5,8 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openspaces.analytics.archive.DynamicArchiverContainer;
-import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand;
+import org.openspaces.analytics.support.AsyncMessage.MessageType;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.GigaSpaceConfigurer;
 import org.openspaces.core.space.UrlSpaceConfigurer;
@@ -40,14 +39,14 @@ public class AccumulatorTest {
 		cmd.getParms().put("code","changes.increment(fields[0],1);"+
 				"changes.increment(\"count\",fields[3].toInteger());"
 				);
+		Thread.sleep(5000L);
+		System.out.println("writing command");
 		space.write(cmd);
+		cmd.setMessageType(MessageType.RESPONSE);
+		cmd=space.take(cmd,2000L);
+		assertNotNull(cmd);
+		org.junit.Assert.assertFalse(cmd.getHadError());
 		
-		//archiver command
-		DynamicArchiverContainer.ArchiverCommand ac=new DynamicArchiverContainer.ArchiverCommand();
-		ac.setMode(ArchiverCommand.Mode.DISCARD);
-		space.write(ac);
-		
-		Thread.sleep(5000);
 		System.out.println("writing events");
 		space.write(new Event("test","f1","f2","f3","1"));
 		space.write(new Event("test","f1","f2","f3","3"));
@@ -57,7 +56,6 @@ public class AccumulatorTest {
 		assertNotNull(acc);
 		assertEquals((Integer)3,acc.getValues().get("f1"));
 		assertEquals((Integer)10,acc.getValues().get("count"));
-		assertEquals(0,space.count(new Event()));  //archiver should have disposed them
 	}
 
 }

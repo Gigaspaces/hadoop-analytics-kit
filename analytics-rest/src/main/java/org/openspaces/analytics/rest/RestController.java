@@ -9,9 +9,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.script.CompiledScript;
 import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -19,8 +17,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openspaces.analytics.Accumulator;
 import org.openspaces.analytics.DynaAccumulatorAgentCommand;
-import org.openspaces.analytics.DynaAccumulatorAgentCommand.MessageType;
 import org.openspaces.analytics.Event;
+import org.openspaces.analytics.archive.ArchiverMessenger;
+import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand;
+import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand.Mode;
+import org.openspaces.analytics.rest.Scatterer.Scatterable;
+import org.openspaces.analytics.support.AsyncMessage.MessageType;
 import org.openspaces.core.GigaSpace;
 import org.openspaces.core.cluster.ClusterInfo;
 import org.openspaces.dynamic.DynamicBase;
@@ -120,7 +122,7 @@ public class RestController extends DynamicBase{
 	@RequestMapping(value="/accumulator/{name}",method=RequestMethod.DELETE)
 	@ResponseBody
 	public String deleteAccumulator(@PathVariable String name, HttpServletResponse response)throws Exception{
-		executeCommand(DynaAccumulatorAgentCommand.deleteAccumulator(name));
+		executeAccumulatorCommand(DynaAccumulatorAgentCommand.deleteAccumulator(name));
 		response.setStatus(HttpServletResponse.SC_OK);
 		return String.format("accumulator %s deleted",name);
 	}
@@ -161,7 +163,7 @@ public class RestController extends DynamicBase{
 
 		log.info("writing agent command:"+cmd);
 
-		executeCommand(cmd);
+		executeAccumulatorCommand(cmd);
 
 		response.setStatus(HttpServletResponse.SC_CREATED);
 		return String.format("accumulator %s created",name);
@@ -249,11 +251,57 @@ public class RestController extends DynamicBase{
 		} catch (ScriptException e) {
 			throw new RuntimeException(e);
 		}
-		ModelAndView mv=new ModelAndView("jsonView");
-		mv.addObject(new Event(space==null?"null":space.toString()));
 		response.setStatus(HttpServletResponse.SC_CREATED);
 		return "";
 	}
+	
+	/**
+	 * Retrieves archiver state(s)
+	 * 
+	 * @return
+	 */
+	@RequestMapping(value="/archivers", method= RequestMethod.GET)
+	public ModelAndView getArchivers()throws Exception{
+		ModelAndView mv=new ModelAndView("jsonView");
+		List<ArchiverCommand> cmds=Scatterer.scatter(space,new Scatterable<ArchiverCommand>(){
+			@Override
+			public ArchiverCommand call(GigaSpace space) throws Exception {
+				return new ArchiverMessenger(space).getMode();
+			}
+		});	
+		for(ArchiverCommand cmd:cmds){
+			mv.addObject(cmd.getMode());
+		}
+		return mv;
+	}
+	
+	/**
+	 * This is how the archiver mode is set in the cluster.
+	 * is the source of data, and the user supplied EventMapper is
+	 * responsible for transforming the body into one or more events,
+	 * using the supplied OutputCollector.
+	 * 
+	 * @param body
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="/archivers/{mode}",method=RequestMethod.POST)
+	public void setArchiverModes(@PathVariable final String modestr)throws Exception{
+		List<ArchiverCommand> cmds=Scatterer.scatter(space,new Scatterable<ArchiverCommand>(){
+			@Override
+			public ArchiverCommand call(GigaSpace space) throws Exception{
+				new ArchiverMessenger(space).setMode(Mode.parse(modestr));
+				return null; //no return from this one
+			}
+		});
+	}
+	
+	
+	
+	
+	
+	
+	
 
 	@PostConstruct
 	public void postConstruct(){
@@ -277,8 +325,8 @@ public class RestController extends DynamicBase{
 	public void setHandlerLanguage(String mapperLanguage) {
 		this.mapperLanguage = mapperLanguage;
 	}
-
-	private List<DynaAccumulatorAgentCommand> executeCommand(DynaAccumulatorAgentCommand cmd)throws Exception{
+	
+	private List<DynaAccumulatorAgentCommand> executeAccumulatorCommand(DynaAccumulatorAgentCommand cmd)throws Exception{
 		DynaAccumulatorAgentCommand template=new DynaAccumulatorAgentCommand();
 		template.setId(cmd.getId());
 		template.setMessageType(MessageType.RESPONSE);
@@ -291,7 +339,7 @@ public class RestController extends DynamicBase{
 			throw new PartialResponseException(String.format("only %d of %d agents responded",responses.size(),primaryCount));
 		}
 		for(DynaAccumulatorAgentCommand resp:responses){
-			if(resp.getSuccess()!=true){
+			if(resp.getHadError()==true){
 				throw new CommandFailedException();
 			}
 		}

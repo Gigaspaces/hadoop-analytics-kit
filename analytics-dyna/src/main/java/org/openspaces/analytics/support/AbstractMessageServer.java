@@ -37,10 +37,11 @@ public abstract class AbstractMessageServer<T extends AsyncMessage> {
 			container = new SimplePollingContainerConfigurer(space)
 				.eventListenerMethod(new Listener<T>(this),"handleEvent")
 				.template(msgTemplate)
-				.autoStart(true)
 				.receiveOperationHandler(new SingleTakeReceiveOperationHandler())
 				.concurrentConsumers(1)
 				.create();
+			
+			container.start();
 			
 			log.info("started container");
 		}

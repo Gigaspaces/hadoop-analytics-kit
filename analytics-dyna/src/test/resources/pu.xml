@@ -36,47 +36,8 @@
 	<os-core:giga-space id="space" space="ijspace"
 		tx-manager="txm" />
 
-	<bean id="handler"
-		class="org.openspaces.analytics.archive.DynamicHdfsArchiveHandler">
-		<constructor-arg>
-			<bean class="org.openspaces.archiver.hdfs.serializers.ToStringHdfsSerializer" />
-		</constructor-arg>
-		<property name="fs">
-			<bean class="org.openspaces.archiver.hdfs.LazyHdfsFileSystem">
-				<constructor-arg value="${hdfs.uri}" />
-				<constructor-arg value="${hdfs.user}" />
-			</bean>
-		</property>
-		<property name="strategy">
-			<bean class="org.openspaces.archiver.hdfs.strategies.SimplePatternPathStrategy">
-				<constructor-arg value="/files/%D-%T_%p" />
-			</bean>
-		</property>
+	<bean class="org.openspaces.analytics.DynaAccumulatorAgent">
+		<constructor-arg ref="space"/>
 	</bean>
-
-	<bean id="archiverContainer" class="org.openspaces.analytics.archive.DynamicArchiverContainer">
-		<constructor-arg ref="txm" />
-		<constructor-arg ref="handler" />
-		<constructor-arg>
-			<bean class="org.openspaces.analytics.Event">
-				<property name="processed" value="true" />
-			</bean>
-		</constructor-arg>
-		<constructor-arg value="100" />
-	</bean>
-
-	<os-events:polling-container id="eventContainer"
-		giga-space="space">
-		 <os-events:receive-operation-handler>
-	        <bean class="org.openspaces.events.polling.receive.SingleTakeReceiveOperationHandler" />
-    	</os-events:receive-operation-handler>
- 		<os-events:dynamic-template ref="archiverContainer" />
-
-		<os-events:listener>
-			<os-events:method-adapter method-name="commandHandler">
-				<os-events:delegate ref="archiverContainer"/>
-			</os-events:method-adapter>
-		</os-events:listener>
-	</os-events:polling-container>
 
 </beans>

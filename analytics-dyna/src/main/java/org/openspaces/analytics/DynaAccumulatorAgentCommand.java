@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.openspaces.analytics.support.AsyncMessage;
+
 import com.gigaspaces.annotation.pojo.SpaceClass;
 import com.gigaspaces.annotation.pojo.SpaceId;
 import com.gigaspaces.annotation.pojo.SpaceRouting;
@@ -13,24 +15,18 @@ import com.gigaspaces.annotation.pojo.SpaceRouting;
  * Represents a command for the PollingContainerAgent. There can only be one command of each
  * name 
  * 
- * TODO: Command infrastructure needs to work in partitioned spaces
- * 
  * @author DeWayne
  *
  */
 @SpaceClass
-public class DynaAccumulatorAgentCommand implements Message {
+public class DynaAccumulatorAgentCommand implements AsyncMessage {
 	private String id=null;
 	private Integer routingId=null;
+	private String errmsg;
+	private Boolean hadError=false;
 	private String command=null;
-	private MessageType messageType=null;
-	private Boolean success=null; //for responses
 	private Map<String,Object> parms=null;
-	
-	public static enum MessageType{
-		REQUEST,
-		RESPONSE
-	}
+	private MessageType messageType;
 	
 	public DynaAccumulatorAgentCommand(){}
 
@@ -38,6 +34,7 @@ public class DynaAccumulatorAgentCommand implements Message {
 		DynaAccumulatorAgentCommand cmd=new DynaAccumulatorAgentCommand();
 
 		cmd.setId(UUID.randomUUID().toString());
+		cmd.setMessageType(AsyncMessage.MessageType.REQUEST);
 		cmd.setCommand("new");
 		cmd.setMessageType(DynaAccumulatorAgentCommand.MessageType.REQUEST);
 		cmd.setParms(new HashMap<String,Object>());
@@ -51,27 +48,13 @@ public class DynaAccumulatorAgentCommand implements Message {
 		DynaAccumulatorAgentCommand cmd=new DynaAccumulatorAgentCommand();
 
 		cmd.setId(UUID.randomUUID().toString());
+		cmd.setMessageType(AsyncMessage.MessageType.REQUEST);
 		cmd.setCommand("delete");
 		cmd.setMessageType(DynaAccumulatorAgentCommand.MessageType.REQUEST);
 		cmd.setParms(new HashMap<String,Object>());
 		cmd.getParms().put("name",name);
 		return cmd;
 	}
-	
-	@SpaceId(autoGenerate=false)
-	@Override
-	public String getId() {
-		return id;
-	}
-	@Override
-	public void setId(String id) {
-		this.id = id;
-	}
-	@SpaceRouting
-	public Integer getRoutingId(){
-		return routingId; 
-	}
-	public void setRoutingId(Integer rid){}
 	
 	public String getCommand() {
 		return command;
@@ -86,23 +69,54 @@ public class DynaAccumulatorAgentCommand implements Message {
 		this.parms = parms;
 	}
 	
+	public String toString(){
+		return String.format("{id=%s,type=%s,command=%s,parms=%s}",id,getMessageType(),command,parms);
+	}
+
+	@SpaceId(autoGenerate=true)
+	@Override
+	public String getId() {
+		return id;
+	}
+	@Override
+	public void setId(String id) {
+		this.id = id;
+	}
+	@SpaceRouting
+	public Integer getRoutingId(){
+		return routingId; 
+	}
+	public void setRoutingId(Integer rid){}
+	
+	@Override
+	public void setMessageType(
+			org.openspaces.analytics.support.AsyncMessage.MessageType messageType) {
+		this.messageType=messageType;
+	}
+
+	@Override
 	public MessageType getMessageType() {
 		return messageType;
 	}
 
-	public void setMessageType(MessageType messageType) {
-		this.messageType = messageType;
+	@Override
+	public Boolean getHadError() {
+		return hadError;
 	}
 
-	public Boolean getSuccess() {
-		return success;
+	@Override
+	public void setHadError(Boolean status) {
+		hadError=status;
 	}
 
-	public void setSuccess(Boolean success) {
-		this.success = success;
+	@Override
+	public String getErrorMessage() {
+		return errmsg;
 	}
-	
-	public String toString(){
-		return String.format("{id=%s,type=%s,command=%s,parms=%s",id,messageType,command,parms);
+
+	@Override
+	public void setErrorMessage(String message) {
+		errmsg=message;
 	}
+
 }

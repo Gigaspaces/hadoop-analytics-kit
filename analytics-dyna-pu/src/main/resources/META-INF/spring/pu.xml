@@ -39,6 +39,10 @@
 		default-timeout="5000" />
 	<os-core:giga-space id="space" space="ijspace"
 		tx-manager="transactionManager" />
+		
+	<bean id="agent" class="org.openspaces.analytics.DynaAccumulatorAgent">
+		<constructor-arg ref="space"/>
+	</bean>
 
 	<bean id="handler"
 		class="org.openspaces.analytics.archive.DynamicHdfsArchiveHandler">

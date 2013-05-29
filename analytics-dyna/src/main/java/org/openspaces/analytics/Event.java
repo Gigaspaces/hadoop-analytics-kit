@@ -5,9 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.gigaspaces.annotation.pojo.SpaceClass;
+import com.gigaspaces.annotation.pojo.SpaceId;
 
 @SpaceClass
 public class Event{
+	private String id;
 	private String name;
 	private List<String> fields;
 	private Boolean processed;
@@ -48,6 +50,15 @@ public class Event{
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	@SpaceId(autoGenerate=true)
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 }
