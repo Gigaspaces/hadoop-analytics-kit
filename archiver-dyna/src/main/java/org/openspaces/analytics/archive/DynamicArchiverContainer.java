@@ -10,7 +10,6 @@ import javax.annotation.PreDestroy;
 import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand;
 import org.openspaces.analytics.archive.DynamicArchiverContainer.ArchiverCommand.Mode;
 import org.openspaces.analytics.support.AbstractMessageServer;
-import org.openspaces.analytics.support.AsyncMessage;
 import org.openspaces.analytics.support.AsyncMessage.MessageType;
 import org.openspaces.archive.ArchiveOperationHandler;
 import org.openspaces.archive.ArchivePollingContainer;
@@ -149,7 +148,7 @@ public class DynamicArchiverContainer extends AbstractMessageServer<ArchiverComm
 
 	//Do not remove the explicit annotation reference: breaks build
 	@com.gigaspaces.annotation.pojo.SpaceClass
-	public static class ArchiverCommand implements AsyncMessage
+	public static class ArchiverCommand implements org.openspaces.analytics.support.AsyncMessage
 	{
 		private String id;
 		private Command command;

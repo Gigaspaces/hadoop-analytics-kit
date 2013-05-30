@@ -15,7 +15,6 @@ import org.openspaces.events.polling.ReceiveHandler;
 import org.openspaces.events.polling.receive.MultiTakeReceiveOperationHandler;
 import org.openspaces.events.polling.receive.ReceiveOperationHandler;
 
-import com.gigaspaces.client.ChangeSet;
 import com.gigaspaces.query.IdQuery;
 
 /**
