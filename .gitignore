@@ -12,6 +12,12 @@
 .project
 .metadata/
 
+# Idea
+.idea/
+*.iml
+*.ipr
+*.iws
+
 # Maven
 
 target/
