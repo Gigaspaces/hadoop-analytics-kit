@@ -8,6 +8,7 @@
 
 	<modules>
 		<module>hdfs-archiver</module>
+        <module>archiver-dyna</module>
 		<module>dynamic-grid</module>
 		<module>analytics-dyna</module>
 		<module>analytics-dyna-pu</module>
