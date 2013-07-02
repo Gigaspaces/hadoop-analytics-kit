@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <project>
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.openspaces</groupId>
 	<artifactId>ea</artifactId>
@@ -14,5 +15,6 @@
 		<module>analytics-dyna-pu</module>
 		<module>analytics-rest</module>
 	</modules>
+
 </project>
 
