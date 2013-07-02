@@ -40,7 +40,7 @@ groovy code for parsing input records into tokens/tuples in XAP.  Ultimately, th
 code should be defined in the master configuration discussed earlier.
 
 * **analytics-dyna** - this project implements the dynamic aggregation infrastructure
-that will ultimately run in XAP.  It supports dynamically spawning dynamic defined 
+that will ultimately run in XAP.  It supports dynamically spawning dynamic defined
 containers that execute user defined logic for performing aggregations.
 
 * **analytics-dyna-pu** - the is the deployment unit for the analytics engine.  Contains no code of it's own, but deploys code found in _analytics-dyna_.
@@ -48,3 +48,9 @@ containers that execute user defined logic for performing aggregations.
 * **dynamic-grid** - this project contains code that serves as the basis for the dynamic execution in the system.  Providers of updatable logic are consumers of this project.
 
 * **install** - this project contains scripts needed to create an overlay on a XAP installation that provides for easy startup and deployment.  It includes a script to create a zip file to contain the overlay, plus jars and scripts that get placed into various XAP directories, including the master configuration described above.
+
+## quick-start guide
+
+1. Download and install **hadoop** from http://hadoop.apache.org/releases.html . $HADOOP_HOME/sbin/start-all.sh...
+* Download and install **gigaspaces** from http://www.gigaspaces.com/LatestProductVersion to $JSHOMEDIR (location of unzipped gigaspaces directory)
+
