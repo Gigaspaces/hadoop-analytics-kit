@@ -40,7 +40,7 @@ groovy code for parsing input records into tokens/tuples in XAP.  Ultimately, th
 code should be defined in the master configuration discussed earlier.
 
 * **analytics-dyna** - this project implements the dynamic aggregation infrastructure
-that will ultimately run in XAP.  It supports dynamically spawning dynamic defined 
+that will ultimately run in XAP.  It supports dynamically spawning dynamic defined
 containers that execute user defined logic for performing aggregations.
 
 * **analytics-dyna-pu** - the is the deployment unit for the analytics engine.  Contains no code of it's own, but deploys code found in _analytics-dyna_.
