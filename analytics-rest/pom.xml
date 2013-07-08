@@ -2,47 +2,48 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.openspaces</groupId>
+
+    <parent>
+        <groupId>org.openspaces</groupId>
+        <artifactId>ea</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
 	<artifactId>analytics-rest</artifactId>
-	<name>analytics-rest</name>
-	<packaging>war</packaging>
-	<version>1.0.0-BUILD-SNAPSHOT</version>
+    <packaging>war</packaging>
+
 	<properties>
 		<gigaVersion>9.5.1-RELEASE</gigaVersion>
-		<org.springframework-version>3.1.3.RELEASE</org.springframework-version>
 		<java-version>1.6</java-version>
 		<org.aspectj-version>1.6.10</org.aspectj-version>
 		<org.slf4j-version>1.6.6</org.slf4j-version>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.gigaspaces</groupId>
 			<artifactId>gs-runtime</artifactId>
-			<version>${gigaVersion}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.gigaspaces</groupId>
 			<artifactId>gs-openspaces</artifactId>
-			<version>${gigaVersion}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.openspaces</groupId>
 			<artifactId>analytics-dyna</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
+        </dependency>
 		<dependency>
 			<groupId>org.openspaces</groupId>
 			<artifactId>archiver-dyna</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-
-		<!-- Spring -->
-		<dependency>
+        </dependency>
+        <dependency>
+            <groupId>org.openspaces</groupId>
+            <artifactId>dynamic-grid</artifactId>
+        </dependency>
+        <dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-			<version>${org.springframework-version}</version>
+			<version>${spring.version}</version>
 			<scope>provided</scope>
 			<exclusions>
 				<!-- Exclude Commons Logging in favor of SLF4j -->
@@ -55,13 +56,11 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-tx</artifactId>
-			<version>${org.springframework-version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webmvc</artifactId>
-			<version>${org.springframework-version}</version>
+			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.cedarsoft.serialization.generator</groupId>
@@ -73,8 +72,6 @@
 			<artifactId>aspectjrt</artifactId>
 			<version>${org.aspectj-version}</version>
 		</dependency>
-
-
 		<!-- Servlet -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -93,18 +90,10 @@
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
 		</dependency>
-		<dependency>
-			<groupId>org.openspaces</groupId>
-			<artifactId>dynamic-grid</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-
 		<!-- Test -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.7</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>
@@ -123,25 +112,6 @@
 					<downloadJavadocs>true</downloadJavadocs>
 				</configuration>
 			</plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.5.1</version>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <compilerArgument>-Xlint:all</compilerArgument>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>2.2</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
