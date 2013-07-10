@@ -20,8 +20,8 @@ rem ---------------------
 rem deploy
 rem ---------------------
 
-@call %scriptdir%/gs.bat deploy -properties %confdir%\ea-config.properties %libdir%\analytics-dyna-pu.jar
-@call %scriptdir%/gs.bat deploy -properties %confdir%\ea-config.properties %libdir%\analytics-rest.war
+@call %scriptdir%/gs.bat deploy -properties file://%confdir%\ea-config.properties %libdir%\analytics-dyna-pu.jar
+@call %scriptdir%/gs.bat deploy -properties file://%confdir%\ea-config.properties %libdir%\analytics-rest.war
 
 @start/b "webui" %scriptdir%/gs-webui.bat
 
