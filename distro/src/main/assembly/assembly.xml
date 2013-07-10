@@ -5,6 +5,24 @@
         <format>zip</format>
         <format>dir</format>
     </formats>
+    <fileSets>
+        <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>conf</outputDirectory>
+            <includes>
+                <include>ea-config.properties</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/scripts</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+                <include>*.sh</include>
+                <include>*.groovy</include>
+            </includes>
+        </fileSet>
+    </fileSets>
     <moduleSets>
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
